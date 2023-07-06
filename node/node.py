@@ -19,7 +19,14 @@ while rval:
 
     frame1 = frame2
 
-    cv2.imshow("preview", diff_image)
+    scale_percent = 25
+    end_width = int(diff_image.shape[1] * scale_percent / 100)
+    end_height = int(diff_image.shape[0] * scale_percent / 100)
+    dimensions = (end_width, end_height)
+
+    diff_image_resized = cv2.resize(diff_image, dimensions, interpolation = cv2.INTER_AREA)
+
+    cv2.imshow("preview", diff_image_resized)
 
     key = cv2.waitKey(20)
     if key == 27: # exit on ESC
