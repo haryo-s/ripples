@@ -1,4 +1,11 @@
 import cv2
+import socket
+
+UDP_IP = "127.0.0.1"
+UDP_PORT = 61252
+
+sock = socket.socket(socket.AF_INET,
+                     socket.SOCK_DGRAM)
 
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
@@ -27,6 +34,8 @@ while rval:
     diff_image_resized = cv2.resize(diff_image, dimensions, interpolation = cv2.INTER_AREA)
 
     cv2.imshow("preview", diff_image_resized)
+
+    sock.sendto(diff_image_resized, (UDP_IP, UDP_PORT))
 
     key = cv2.waitKey(20)
     if key == 27: # exit on ESC
