@@ -1,5 +1,6 @@
 import cv2
 import socket
+import numpy
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 61252
@@ -35,7 +36,15 @@ while rval:
 
     cv2.imshow("preview", diff_image_resized)
 
-    sock.sendto(diff_image_resized, (UDP_IP, UDP_PORT))
+    encode_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+    result, img_encoded = cv2.imencode(".jpg", diff_image_resized, encode_parameters)
+    data: numpy.ndarray = numpy.array(img_encoded)
+    data_string = data.tobytes()
+
+    # sock.sendto(bytes(len(data_string)), (UDP_IP, UDP_PORT))
+    sock.sendto(data_string, (UDP_IP, UDP_PORT))
+
+    # sock.sendto(diff_image_resized, (UDP_IP, UDP_PORT))
 
     key = cv2.waitKey(20)
     if key == 27: # exit on ESC
