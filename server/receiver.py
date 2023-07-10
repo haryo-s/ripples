@@ -22,5 +22,4 @@ while True:
     if key == 27: # exit on ESC
         break
 
-vc.release()
 cv2.destroyWindow("preview")
