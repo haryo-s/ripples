@@ -14,7 +14,6 @@ sock.bind((UDP_IP, UDP_PORT))
 while True:
     string_data, addr = sock.recvfrom(20000)
     data = numpy.fromstring(string_data, dtype='uint8')
-    print(data)
     decoded_image = cv2.imdecode(data,1)
     cv2.imshow("Receiver", decoded_image)
 
