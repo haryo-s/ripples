@@ -2,8 +2,11 @@ import cv2
 import socket
 import numpy
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 61252
+# UDP_IP = "127.0.0.1"
+# UDP_PORT = 61252
+
+UDP_IP = "192.168.178.21"
+UDP_PORT = 8888
 
 sock = socket.socket(socket.AF_INET,
                      socket.SOCK_DGRAM)

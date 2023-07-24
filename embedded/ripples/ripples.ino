@@ -20,6 +20,9 @@ unsigned int myReceivePort = 8888;
 IPAddress destinationIp(192, 168, 178, 10);
 unsigned int destinationReceivePort = 8000;
 
+char packetBuffer[255]; //buffer to hold incoming packet
+char ReplyBuffer[] = "acknowledged";       // a string to send back
+
 MicroOscUdp<1024> myOsc(&myUdp, mySendIp, mySendPort);
 
 void setup() {
@@ -36,10 +39,47 @@ void setup() {
 }
 
 void loop() {
+
+  // When home button is held down, send OSC packet
   digitalRead(M5_BUTTON_HOME);
 
   if (digitalRead(M5_BUTTON_HOME) == 0) {
       myOsc.sendInt("/photo", 1);
+  }
+
+  // Now we're going to see if we can receive something
+  int packetSize = myUdp.parsePacket();
+
+  if (packetSize) {
+
+    Serial.print("Received packet of size ");
+    Serial.println(packetSize);
+    Serial.print("From ");
+
+    IPAddress remoteIp = myUdp.remoteIP();
+
+    Serial.print(remoteIp);
+    Serial.print(", port ");
+    Serial.println(myUdp.remotePort());
+
+    // read the packet into packetBufffer
+
+    int len = myUdp.read(packetBuffer, 255);
+
+    if (len > 0) {
+
+      packetBuffer[len] = 0;
+    }
+
+    Serial.println("Contents:");
+    Serial.println(packetBuffer);
+
+    // send a reply, to the IP address and port that sent us the packet we received
+
+    // myUdp.beginPacket(myUdp.remoteIP(), myUdp.remotePort());
+    // myUdp.write(ReplyBuffer);
+    // myUdp.endPacket();
+
   }
 
   delay(5);
