@@ -41,8 +41,9 @@ while rval:
 
     encode_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     result, img_encoded = cv2.imencode(".jpg", diff_image_resized, encode_parameters)
-    data: numpy.ndarray = numpy.array(img_encoded)
-    data_string = data.tobytes()
+    # data: numpy.ndarray = numpy.array(img_encoded)
+    data = "Hello from Python"
+    data_string = bytes(data, 'utf-8')
 
     # sock.sendto(bytes(len(data_string)), (UDP_IP, UDP_PORT))
     sock.sendto(data_string, (UDP_IP, UDP_PORT))
