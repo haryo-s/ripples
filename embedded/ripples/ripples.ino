@@ -39,7 +39,7 @@ MicroOscUdp<1024> myOsc(&myUdp, mySendIp, mySendPort);
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
 #define NUM_LEDS    126
-#define BRIGHTNESS  25
+#define BRIGHTNESS  10
 
 CRGB leds[NUM_LEDS];
 
@@ -111,12 +111,12 @@ void loop() {
     {
       for (int i = 0; i < 126; i++) 
       {
-        if (&packetBuffer[i] == "0") 
+        if (packetBuffer[i] == '0') 
         {
           leds[i] = CRGB::Black;
           Serial.println("Turning off");
         }
-        if (&packetBuffer[i] == "1") 
+        if (packetBuffer[i] == '1') 
         {
           leds[i] = CRGB::Red;
           Serial.println("Turning on");
