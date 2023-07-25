@@ -114,12 +114,12 @@ void loop() {
         if (packetBuffer[i] == '0') 
         {
           leds[i] = CRGB::Black;
-          Serial.println("Turning off");
+          // Serial.println("Turning off");
         }
         if (packetBuffer[i] == '1') 
         {
           leds[i] = CRGB::Red;
-          Serial.println("Turning on");
+          // Serial.println("Turning on");
         }
       }
       FastLED.show(); 

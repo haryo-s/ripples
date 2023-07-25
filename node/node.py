@@ -35,20 +35,31 @@ while rval:
     end_height = int(diff_image.shape[0] * scale_percent / 100)
     dimensions = (end_width, end_height)
 
-    diff_image_resized = cv2.resize(diff_image, dimensions, interpolation = cv2.INTER_AREA)
+    diff_image_resized = cv2.resize(diff_image, (18, 7), interpolation = cv2.INTER_AREA)
 
-    cv2.imshow("preview", diff_image_resized)
+    cv2.imshow("preview", diff_image)
+
+    sendbuffer = ""
+
+    for x in diff_image_resized:
+        for y in x:
+            if y > 30:
+                sendbuffer += str(1)
+            else:
+                sendbuffer += str(0)
 
     encode_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     result, img_encoded = cv2.imencode(".jpg", diff_image_resized, encode_parameters)
     # data: numpy.ndarray = numpy.array(img_encoded)
     data = "Hello from Python"
-    data_string = bytes(data, 'utf-8')
+    data_string = bytes(sendbuffer, 'utf-8')
 
     # sock.sendto(bytes(len(data_string)), (UDP_IP, UDP_PORT))
     sock.sendto(data_string, (UDP_IP, UDP_PORT))
 
     # sock.sendto(diff_image_resized, (UDP_IP, UDP_PORT))
+
+    sendbuffer = ""
 
     key = cv2.waitKey(20)
     if key == 27: # exit on ESC
