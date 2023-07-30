@@ -38,13 +38,18 @@ MicroOscUdp<1024> myOsc(&myUdp, mySendIp, mySendPort);
 #define DATA_PIN    26
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
-#define NUM_LEDS    126
 #define BRIGHTNESS  10
+
+const int LED_HOR = 18;
+const int LED_VER = 7;
+const int NUM_LEDS = LED_HOR * LED_VER; 
 
 CRGB leds[NUM_LEDS];
 
 void setup() {
   M5.begin(true, true, true);
+  pinMode(M5_LED, OUTPUT);
+  Serial.begin(9600);
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -66,13 +71,17 @@ void loop() {
 
   if (digitalRead(M5_BUTTON_HOME) == 0) {
       myOsc.sendInt("/photo", 1);
-      leds[0]   = CRGB::Red;
+      digitalWrite (M5_LED, LOW);
+      for (int i = 0; i < NUM_LEDS; i++) 
+      {
+        leds[i] = CRGB::Black;
+      }
       FastLED.show(); 
+
   }
 
     if (digitalRead(M5_BUTTON_HOME) == 1) {
-      leds[0]   = CRGB::Black;
-      FastLED.show(); 
+      digitalWrite (M5_LED, HIGH);
   }
 
   // Now we're going to see if we can receive something
