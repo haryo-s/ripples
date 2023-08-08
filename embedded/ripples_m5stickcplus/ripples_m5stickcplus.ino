@@ -8,8 +8,6 @@
 #include <WiFiUdp.h>
 #include <MicroOscUdp.h>
 
-
-
 // WIFI SETTINGS
 
 const char* ssid       = SECRET_SSID;

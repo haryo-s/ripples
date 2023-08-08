@@ -1,4 +1,4 @@
-/embedded/ripples_m5stickcplus/secrets.h
-/embedded/ripples_m5stickcplus/esp32.svd
-/embedded/ripples_m5stickcplus/debug.cfg
-/embedded/ripples_m5stickcplus/debug_custom.json
+/embedded/ripples_*/secrets.h
+/embedded/ripples_*/esp32.svd
+/embedded/ripples_*/debug.cfg
+/embedded/ripples_*/debug_custom.json
