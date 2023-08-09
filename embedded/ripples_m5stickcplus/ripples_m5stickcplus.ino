@@ -9,7 +9,6 @@
 #include <MicroOscUdp.h>
 
 // WIFI SETTINGS
-
 const char* ssid       = SECRET_SSID;
 const char* password   = SECRET_PASS;
 
@@ -17,7 +16,6 @@ int button_last_value = 0;
 int button_cur_value  = 0;
 
 // UDP SETTINGS
-
 WiFiUDP myUdp;
 IPAddress mySendIp(192, 168, 178, 21);
 unsigned int mySendPort = 7777;
@@ -107,12 +105,6 @@ void loop() {
 
     Serial.println("Contents:");
     Serial.println(packetBuffer);
-
-    // send a reply, to the IP address and port that sent us the packet we received
-
-    // myUdp.beginPacket(myUdp.remoteIP(), myUdp.remotePort());
-    // myUdp.write(ReplyBuffer);
-    // myUdp.endPacket();
 
     if (packetSize == 126) 
     {
