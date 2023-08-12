@@ -9,6 +9,8 @@
 #include <WiFiUdp.h>
 // #include <MicroOscUdp.h>
 
+// CAMERA
+int FRAMESIZE = FRAMESIZE_QVGA; //320x240 or 76800b or 76.8kb
 camera_fb_t* fb;
 
 // UDP SETTINGS
@@ -20,7 +22,7 @@ unsigned int myReceivePort = 8888;
 IPAddress destinationIp(192, 168, 178, 255);
 unsigned int destinationReceivePort = 8888;
 
-char sendBuffer[FRAMESIZE_QVGA];
+char sendBuffer[76800];
 
 void setup() {
   Serial.begin(115200);
@@ -47,9 +49,9 @@ void loop() {
   else {
     // sendBuffer = fb->buf;
     myUdp.beginPacket(destinationIp, destinationReceivePort);
-    myUdp.write(*fb->buf);
+    myUdp.write(fb->buf, fb->len);
     myUdp.endPacket();
-    Serial.println(fb->buf[0]);
+    // Serial.println(fb->buf[0]);
     Serial.println(fb->len);
   }
   esp_camera_fb_return(fb);
@@ -78,7 +80,7 @@ esp_err_t init_camera(){
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  config.frame_size   = FRAMESIZE_QVGA; //320x240 or 76800b or 76.8kb
+  config.frame_size   = FRAMESIZE_QVGA;
   config.pixel_format = PIXFORMAT_GRAYSCALE; // 1 byte per pixel, 0-255
   // config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
   config.grab_mode    = CAMERA_GRAB_LATEST;
