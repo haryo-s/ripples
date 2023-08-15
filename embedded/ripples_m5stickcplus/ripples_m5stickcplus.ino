@@ -24,7 +24,7 @@ unsigned int myReceivePort = 8888;
 IPAddress destinationIp(192, 168, 178, 10);
 unsigned int destinationReceivePort = 8000;
 
-char packetBuffer[255]; //buffer to hold incoming packet
+char receiveBuffer[76800]; //buffer to hold incoming packet
 char ReplyBuffer[] = "acknowledged";       // a string to send back
 
 MicroOscUdp<1024> myOsc(&myUdp, mySendIp, mySendPort);
@@ -45,7 +45,9 @@ CRGB leds[NUM_LEDS];
 void setup() {
   M5.begin(true, true, true);
   pinMode(M5_LED, OUTPUT);
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial.setDebugOutput(true);
+  Serial.println();
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -61,71 +63,63 @@ void setup() {
 }
 
 void loop() {
-
   // When home button is held down, send OSC packet
   digitalRead(M5_BUTTON_HOME);
 
   if (digitalRead(M5_BUTTON_HOME) == 0) {
-      myOsc.sendInt("/photo", 1);
-      digitalWrite (M5_LED, LOW);
-      for (int i = 0; i < NUM_LEDS; i++) 
-      {
-        leds[i] = CRGB::Black;
-      }
-      FastLED.show(); 
-
+    myOsc.sendInt("/photo", 1);
+    digitalWrite (M5_LED, LOW);
+    for (int i = 0; i < NUM_LEDS; i++) 
+    {
+      leds[i] = CRGB::Black;
+    }
+    Serial.println("Resetting array");
+    FastLED.show(); 
   }
 
-    if (digitalRead(M5_BUTTON_HOME) == 1) {
-      digitalWrite (M5_LED, HIGH);
+  if (digitalRead(M5_BUTTON_HOME) == 1) {
+    digitalWrite(M5_LED, HIGH);
   }
 
   // Now we're going to see if we can receive something
   int packetSize = myUdp.parsePacket();
 
   if (packetSize) {
-
     Serial.print("Received packet of size ");
     Serial.println(packetSize);
     Serial.print("From ");
-
     IPAddress remoteIp = myUdp.remoteIP();
-
     Serial.print(remoteIp);
     Serial.print(", port ");
     Serial.println(myUdp.remotePort());
 
-    // read the packet into packetBufffer
+    // // read the packet into packetBufffer
+    // int len = myUdp.read(receiveBuffer, 255);
 
-    int len = myUdp.read(packetBuffer, 255);
+    // if (len > 0) {
+    //   receiveBuffer[len] = 0;
+    // }
 
-    if (len > 0) {
-      packetBuffer[len] = 0;
-    }
+    // Serial.println("Contents:");
+    // Serial.println(receiveBuffer);
 
-    Serial.println("Contents:");
-    Serial.println(packetBuffer);
-
-    if (packetSize == 126) 
-    {
-      for (int i = 0; i < 126; i++) 
-      {
-        if (packetBuffer[i] == '0') 
-        {
-          leds[i] = CRGB::Black;
-          // Serial.println("Turning off");
-        }
-        if (packetBuffer[i] == '1') 
-        {
-          leds[i] = CRGB::Red;
-          // Serial.println("Turning on");
-        }
-      }
-      FastLED.show(); 
-    }
+    // if (packetSize == 126) 
+    // {
+    //   for (int i = 0; i < 126; i++) 
+    //   {
+    //     if (receiveBuffer[i] == '0') 
+    //     {
+    //       leds[i] = CRGB::Black;
+    //       // Serial.println("Turning off");
+    //     }
+    //     if (receiveBuffer[i] == '1') 
+    //     {
+    //       leds[i] = CRGB::Red;
+    //       // Serial.println("Turning on");
+    //     }
+    //   }
+    //   FastLED.show(); 
+    // }
   }
-
-
-
-  delay(5);
+  // delay(100);
 }

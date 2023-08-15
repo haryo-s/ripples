@@ -38,7 +38,7 @@ void setup() {
 }
 
 void loop() {
-  delay(100);
+  delay(500);
 
   fb = esp_camera_fb_get();
 
@@ -49,14 +49,14 @@ void loop() {
   else {
     // sendBuffer = fb->buf;
     myUdp.beginPacket(destinationIp, destinationReceivePort);
-    myUdp.write(fb->buf, fb->len);
+    myUdp.write(fb->buf, 256);
     myUdp.endPacket();
     // Serial.println(fb->buf[0]);
     Serial.println(fb->len);
   }
   esp_camera_fb_return(fb);
 
-  delay(100);
+  delay(500);
 }
 
 esp_err_t init_camera(){
