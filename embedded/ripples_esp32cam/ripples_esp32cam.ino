@@ -38,7 +38,7 @@ void setup() {
 }
 
 void loop() {
-  delay(500);
+  delay(100);
 
   fb = esp_camera_fb_get();
 
@@ -56,7 +56,7 @@ void loop() {
   }
   esp_camera_fb_return(fb);
 
-  delay(500);
+  delay(100);
 }
 
 esp_err_t init_camera(){

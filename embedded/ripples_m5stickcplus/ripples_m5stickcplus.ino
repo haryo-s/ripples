@@ -24,7 +24,8 @@ unsigned int myReceivePort = 8888;
 IPAddress destinationIp(192, 168, 178, 10);
 unsigned int destinationReceivePort = 8000;
 
-char receiveBuffer[76800]; //buffer to hold incoming packet
+char receiveBuffer[256]; //buffer to hold incoming packet
+// char receiveBuffer[76800]; //buffer to hold incoming packet
 char ReplyBuffer[] = "acknowledged";       // a string to send back
 
 MicroOscUdp<1024> myOsc(&myUdp, mySendIp, mySendPort);
@@ -93,33 +94,42 @@ void loop() {
     Serial.print(", port ");
     Serial.println(myUdp.remotePort());
 
-    // // read the packet into packetBufffer
-    // int len = myUdp.read(receiveBuffer, 255);
+    // read the packet into receiveBuffer
+    int len = myUdp.read(receiveBuffer, packetSize);
 
-    // if (len > 0) {
-    //   receiveBuffer[len] = 0;
-    // }
+    if (len > 0) {
+      receiveBuffer[len] = 0;
+    }
+
+    int receiveBufferIntArray[packetSize];
+
+    for (int i = 0; i < packetSize; i++) {
+      receiveBufferIntArray[i] = (int)(receiveBuffer[i]);
+    }
+
+    Serial.println(receiveBufferIntArray[0]);
+    Serial.println(receiveBufferIntArray[255]);
 
     // Serial.println("Contents:");
     // Serial.println(receiveBuffer);
 
-    // if (packetSize == 126) 
-    // {
-    //   for (int i = 0; i < 126; i++) 
-    //   {
-    //     if (receiveBuffer[i] == '0') 
-    //     {
-    //       leds[i] = CRGB::Black;
-    //       // Serial.println("Turning off");
-    //     }
-    //     if (receiveBuffer[i] == '1') 
-    //     {
-    //       leds[i] = CRGB::Red;
-    //       // Serial.println("Turning on");
-    //     }
-    //   }
-    //   FastLED.show(); 
-    // }
+    if (packetSize == 256) 
+    {
+      for (int i = 0; i < 126; i++) 
+      {
+        if (receiveBufferIntArray[i] <= 128) 
+        {
+          leds[i] = CRGB::Black;
+          // Serial.println("Turning off");
+        }
+        if (receiveBufferIntArray[i] >= 127) 
+        {
+          leds[i] = CRGB::Red;
+          // Serial.println("Turning on");
+        }
+      }
+      FastLED.show(); 
+    }
   }
   // delay(100);
 }
