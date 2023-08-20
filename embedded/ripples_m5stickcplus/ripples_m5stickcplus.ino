@@ -102,25 +102,21 @@ void loop() {
       receiveBufferIntArray[i] = (int)(receiveBuffer[i]);
     }
 
-    Serial.println(receiveBufferIntArray[0]);
-    Serial.println(receiveBufferIntArray[255]);
-
-    // Serial.println("Contents:");
-    // Serial.println(receiveBuffer);
+    Serial.println(int(receiveBuffer[55]));
+    Serial.println(receiveBufferIntArray[55]);
+    Serial.println("........");
 
     if (packetSize == 256) 
     {
       for (int i = 0; i < 126; i++) 
       {
-        if (receiveBufferIntArray[i] <= 128) 
+        if (receiveBufferIntArray[i] == 0) 
         {
           leds[i] = CRGB::Black;
-          // Serial.println("Turning off");
         }
-        if (receiveBufferIntArray[i] >= 127) 
+        if (receiveBufferIntArray[i] == 1) 
         {
           leds[i] = CRGB::Red;
-          // Serial.println("Turning on");
         }
       }
       FastLED.show(); 

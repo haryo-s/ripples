@@ -16,6 +16,7 @@ camera_fb_t* fb;
 const int frameSize = 76800;
 // uint8_t prevFrameBuffer[frameSize];
 uint8_t* prevFrameBuffer;
+uint8_t* differenceBuffer;
 
 // UDP SETTINGS
 WiFiUDP myUdp;
@@ -32,6 +33,7 @@ void setup() {
   Serial.println();
 
   prevFrameBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
+  differenceBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
 
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   while (WiFi.status() != WL_CONNECTED) {
@@ -47,8 +49,14 @@ void loop() {
   fb = esp_camera_fb_get();
 
   if(prevFrameBuffer) {
+    for (int i = 0; i < frameSize; i++) {
+      uint8_t difference = abs(fb->buf[i] - prevFrameBuffer[i]);
+      differenceBuffer[i] = (difference > 64) ? 1 : 0;
+    }
+
     Serial.println(prevFrameBuffer[55]);
     Serial.println(fb->buf[55]);
+    Serial.println(differenceBuffer[55]);
     Serial.println("....");
   }
 
@@ -61,9 +69,8 @@ void loop() {
       memcpy(prevFrameBuffer, fb->buf, fb->len);
     }
     myUdp.beginPacket(destinationIp, destinationReceivePort);
-    myUdp.write(fb->buf, 256);
+    myUdp.write(differenceBuffer, 256);
     myUdp.endPacket();
-    // Serial.println(fb->len);
   }
   esp_camera_fb_return(fb);
 
