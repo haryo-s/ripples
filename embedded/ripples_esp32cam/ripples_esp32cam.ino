@@ -10,70 +10,64 @@
 // #include <MicroOscUdp.h>
 
 // CAMERA
-framesize_t FRAMESIZE = FRAMESIZE_QVGA; //320x240 or 76800b or 76.8kb
-const int frameLength = 76800;
+// Frame size is320x240 or 76800b or 76.8kb
 camera_fb_t* fb;
 
-// Init two buffers to do the diff calculation with
-uint8_t buffer1;
-uint8_t buffer2;
-bool firstFrame = true;
-
-int targetDim[2] = {19, 21};
-int targetFramelen = 0;
+const int frameSize = 76800;
+// uint8_t prevFrameBuffer[frameSize];
+uint8_t* prevFrameBuffer;
 
 // UDP SETTINGS
 WiFiUDP myUdp;
 IPAddress mySendIp(192, 168, 178, 24);
+unsigned int mySendPort = 7777;
 unsigned int myReceivePort = 8888;
 
 IPAddress destinationIp(192, 168, 178, 255);
 unsigned int destinationReceivePort = 8888;
-
-char sendBuffer[frameLength];
 
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
 
+  prevFrameBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
+
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
   }
-  // uint8_t buffer1[frameLength];
-  // uint8_t buffer2[frameLength];
-
   init_camera();
 }
 
 void loop() {
+  delay(125);
+
   fb = esp_camera_fb_get();
+
+  if(prevFrameBuffer) {
+    Serial.println(prevFrameBuffer[55]);
+    Serial.println(fb->buf[55]);
+    Serial.println("....");
+  }
 
   if(!fb){
     Serial.println("Camera capture failed");
     return;
   }
   else {
-    memcpy(buffer1, fb->buf, fb->len);
-
-    // if(firstFrame) {
-    //   memcpy(buffer2, buffer1, strlen(buffer1));
-    //   firstFrame = false;
-    // }
+    if (fb->len == frameSize) {
+      memcpy(prevFrameBuffer, fb->buf, fb->len);
+    }
     myUdp.beginPacket(destinationIp, destinationReceivePort);
-    myUdp.write(fb->buf, fb->len);
+    myUdp.write(fb->buf, 256);
     myUdp.endPacket();
-    Serial.println("Package sent");
-    delay(250);
-
+    // Serial.println(fb->len);
   }
   esp_camera_fb_return(fb);
-  // Serial.println("[APP] Buffer1: " + String(sizeof(buffer1)) + " bytes"); //Print amount of RAM remaining
-  // Serial.println("[APP] Free memory: " + String(esp_get_free_heap_size()) + " bytes"); //Print amount of RAM remaining
-  // Serial.println("[APP] fb->buf " + String(fb->buf[512]) + " bytes"); //Print amount of RAM remaining
-  // Serial.println("[APP] buffer1 " + String(buffer1[512]) + " bytes"); //Print amount of RAM remaining
+
+  delay(125);
 }
 
 esp_err_t init_camera(){

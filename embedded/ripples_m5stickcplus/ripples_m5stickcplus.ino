@@ -6,7 +6,6 @@
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include <MicroOscUdp.h>
 
 // WIFI SETTINGS
 const char* ssid       = SECRET_SSID;
@@ -27,8 +26,6 @@ unsigned int destinationReceivePort = 8000;
 char receiveBuffer[256]; //buffer to hold incoming packet
 // char receiveBuffer[76800]; //buffer to hold incoming packet
 char ReplyBuffer[] = "acknowledged";       // a string to send back
-
-MicroOscUdp<1024> myOsc(&myUdp, mySendIp, mySendPort);
 
 // FLASHHAT SETTINGS
 
@@ -57,7 +54,6 @@ void setup() {
   }
 
   myUdp.begin(myReceivePort);
-  myOsc.setDestination(destinationIp, destinationReceivePort);
 
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
@@ -68,7 +64,6 @@ void loop() {
   digitalRead(M5_BUTTON_HOME);
 
   if (digitalRead(M5_BUTTON_HOME) == 0) {
-    myOsc.sendInt("/photo", 1);
     digitalWrite (M5_LED, LOW);
     for (int i = 0; i < NUM_LEDS; i++) 
     {
