@@ -6,7 +6,6 @@
 #include "camera_pins.h"
 
 #include <WiFi.h>
-#include <WiFiUdp.h>
 // #include <MicroOscUdp.h>
 
 // CAMERA
@@ -19,7 +18,6 @@ uint8_t* prevFrameBuffer;
 uint8_t* differenceBuffer;
 
 // UDP SETTINGS
-WiFiUDP myUdp;
 IPAddress mySendIp(192, 168, 178, 24);
 unsigned int mySendPort = 7777;
 unsigned int myReceivePort = 8888;
@@ -63,10 +61,9 @@ void loop() {
     if (fb->len == frameSize) {
       memcpy(prevFrameBuffer, fb->buf, fb->len);
     }
-    myUdp.beginPacket(destinationIp, destinationReceivePort);
-    // myUdp.write(differenceBuffer, fb->len);
-    myUdp.write(differenceBuffer, frameSize);
-    myUdp.endPacket();
+    // myUdp.beginPacket(destinationIp, destinationReceivePort);
+    // myUdp.write(differenceBuffer, frameSize);
+    // myUdp.endPacket();
   }
   esp_camera_fb_return(fb);
 }
