@@ -15,13 +15,14 @@ int button_last_value = 0;
 int button_cur_value  = 0;
 
 // UDP SETTINGS
-WiFiUDP myUdp;
 IPAddress mySendIp(192, 168, 178, 21);
 unsigned int mySendPort = 7777;
 unsigned int myReceivePort = 8888;
 
-IPAddress destinationIp(192, 168, 178, 10);
-unsigned int destinationReceivePort = 8000;
+IPAddress destinationIp(192, 168, 178, 24);
+unsigned int destinationReceivePort = 9999;
+
+WiFiClient client;
 
 // char receiveBuffer[256]; //buffer to hold incoming packet
 char receiveBuffer[76800]; //buffer to hold incoming packet
@@ -49,11 +50,20 @@ void setup() {
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
+      M5.Lcd.fillScreen(RED);
       delay(500);
       Serial.print(".");
   }
 
-  myUdp.begin(myReceivePort);
+  Serial.println("Connected to wifi");
+  Serial.println("\nStarting connection...");
+  // if you get a connection, report back via serial:
+  if (client.connect(destinationIp, destinationReceivePort)) {
+    Serial.println("connected");
+    // Make a HTTP request:
+    client.println("Hello from M5StickCPlus");
+    client.println();
+  }
 
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
@@ -81,40 +91,5 @@ void loop() {
     digitalWrite(M5_LED, HIGH);
   }
 
-  // Now we're going to see if we can receive something
-  int packetSize = myUdp.parsePacket();
-
-  if (packetSize) {
-    Serial.print("Received packet of size ");
-    Serial.println(packetSize);
-    Serial.print("From ");
-    IPAddress remoteIp = myUdp.remoteIP();
-    Serial.print(remoteIp);
-    Serial.print(", port ");
-    Serial.println(myUdp.remotePort());
-
-    // read the packet into receiveBuffer
-    int len = myUdp.read(receiveBuffer, packetSize);
-
-    // if (len > 0) {
-    //   receiveBuffer[len] = 0;
-    // }
-
-    if (packetSize == 76800) 
-    {
-      for (int i = 0; i < 126; i++) 
-      {
-        if ((int)(receiveBuffer[i]) == 0) 
-        {
-          leds[i] = CRGB::Black;
-        }
-        if ((int)(receiveBuffer[i]) == 1) 
-        {
-          leds[i] = CRGB::Red;
-        }
-      }
-      FastLED.show(); 
-    }
-  }
   // delay(100);
 }
