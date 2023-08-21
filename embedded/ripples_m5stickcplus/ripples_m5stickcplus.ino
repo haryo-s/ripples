@@ -23,8 +23,8 @@ unsigned int myReceivePort = 8888;
 IPAddress destinationIp(192, 168, 178, 10);
 unsigned int destinationReceivePort = 8000;
 
-char receiveBuffer[256]; //buffer to hold incoming packet
-// char receiveBuffer[76800]; //buffer to hold incoming packet
+// char receiveBuffer[256]; //buffer to hold incoming packet
+char receiveBuffer[76800]; //buffer to hold incoming packet
 char ReplyBuffer[] = "acknowledged";       // a string to send back
 
 // FLASHHAT SETTINGS
@@ -57,6 +57,10 @@ void setup() {
 
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
+
+  M5.Lcd.fillScreen(GREEN);
+  delay(500);
+  M5.Lcd.fillScreen(BLACK);
 }
 
 void loop() {
@@ -92,29 +96,19 @@ void loop() {
     // read the packet into receiveBuffer
     int len = myUdp.read(receiveBuffer, packetSize);
 
-    if (len > 0) {
-      receiveBuffer[len] = 0;
-    }
+    // if (len > 0) {
+    //   receiveBuffer[len] = 0;
+    // }
 
-    int receiveBufferIntArray[packetSize];
-
-    for (int i = 0; i < packetSize; i++) {
-      receiveBufferIntArray[i] = (int)(receiveBuffer[i]);
-    }
-
-    Serial.println(int(receiveBuffer[55]));
-    Serial.println(receiveBufferIntArray[55]);
-    Serial.println("........");
-
-    if (packetSize == 256) 
+    if (packetSize == 76800) 
     {
       for (int i = 0; i < 126; i++) 
       {
-        if (receiveBufferIntArray[i] == 0) 
+        if ((int)(receiveBuffer[i]) == 0) 
         {
           leds[i] = CRGB::Black;
         }
-        if (receiveBufferIntArray[i] == 1) 
+        if ((int)(receiveBuffer[i]) == 1) 
         {
           leds[i] = CRGB::Red;
         }

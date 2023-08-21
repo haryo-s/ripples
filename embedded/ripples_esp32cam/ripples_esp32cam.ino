@@ -10,10 +10,10 @@
 // #include <MicroOscUdp.h>
 
 // CAMERA
-// Frame size is320x240 or 76800b or 76.8kb
+// Frame size is 160x120 or 19200b or 19.2kb
 camera_fb_t* fb;
 
-const int frameSize = 76800;
+const int frameSize = 19200;
 // uint8_t prevFrameBuffer[frameSize];
 uint8_t* prevFrameBuffer;
 uint8_t* differenceBuffer;
@@ -44,7 +44,7 @@ void setup() {
 }
 
 void loop() {
-  delay(125);
+  delay(250); // 40ms or 25fps
 
   fb = esp_camera_fb_get();
 
@@ -53,11 +53,6 @@ void loop() {
       uint8_t difference = abs(fb->buf[i] - prevFrameBuffer[i]);
       differenceBuffer[i] = (difference > 64) ? 1 : 0;
     }
-
-    Serial.println(prevFrameBuffer[55]);
-    Serial.println(fb->buf[55]);
-    Serial.println(differenceBuffer[55]);
-    Serial.println("....");
   }
 
   if(!fb){
@@ -69,12 +64,11 @@ void loop() {
       memcpy(prevFrameBuffer, fb->buf, fb->len);
     }
     myUdp.beginPacket(destinationIp, destinationReceivePort);
-    myUdp.write(differenceBuffer, 256);
+    // myUdp.write(differenceBuffer, fb->len);
+    myUdp.write(differenceBuffer, frameSize);
     myUdp.endPacket();
   }
   esp_camera_fb_return(fb);
-
-  delay(125);
 }
 
 esp_err_t init_camera(){
@@ -98,7 +92,8 @@ esp_err_t init_camera(){
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  config.frame_size   = FRAMESIZE_QVGA;
+  config.frame_size   = FRAMESIZE_QQVGA;   // 160x120
+  // config.frame_size   = FRAMESIZE_QVGA; // 320x240
   config.pixel_format = PIXFORMAT_GRAYSCALE; // 1 byte per pixel, 0-255
   // config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
   config.grab_mode    = CAMERA_GRAB_LATEST;
