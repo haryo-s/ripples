@@ -74,30 +74,18 @@ void loop() {
   esp_camera_fb_return(fb);
 
   WiFiClient client = server.available();
-  if (client && client.connected() > 0 && client.available() > 0 && differenceBuffer) {
+  if (client && differenceBuffer) {
     Serial.println("New Client.");           // print a message out the serial port
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected()) {            // loop while the client's connected
-      if (client.available()) {             // if there's bytes to read from the client,
-        char c = client.read();             // read a byte, then
-        Serial.write(c);                    // print it out the serial monitor
-        if (c == '\n') {                    // if the byte is a newline character
-          client.write(differenceBuffer, frameSize);
-          client.println("HTTP/1.1 200 OK");
-        }
+    char c = client.read();             // read a byte, then
+    if (client.available()) {             // if there's bytes to read from the client,
+      Serial.write(c);                    // print it out the serial monitor
+      if (c == '\n') {                    // if the byte is a newline character
+        Serial.println("Request received. Replying with differenceBuffer");
+        client.write(differenceBuffer, frameSize);
       }
     }
-    // read bytes from the incoming client and write them back
-    // to any clients connected to the server:
-    Serial.println("Message received");
   }
-  // if (client && client.connected() > 0 && client.available() > 0) {
-  //   // read bytes from the incoming client and write them back
-  //   // to any clients connected to the server:
-  //   Serial.println("Message received, no differenceBuffer available");
-  //   server.write(differenceBuffer, frameSize);
-  //   server.write(client.read());
-  // }
+
 }
 
 esp_err_t init_camera(){

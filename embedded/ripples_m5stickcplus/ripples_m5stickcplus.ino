@@ -25,7 +25,7 @@ unsigned int destinationReceivePort = 9999;
 WiFiClient client;
 
 // char receiveBuffer[256]; //buffer to hold incoming packet
-char receiveBuffer[76800]; //buffer to hold incoming packet
+uint8_t receiveBuffer[76800]; //buffer to hold incoming packet
 char ReplyBuffer[] = "acknowledged";       // a string to send back
 
 // FLASHHAT SETTINGS
@@ -52,24 +52,21 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
       M5.Lcd.fillScreen(RED);
       delay(500);
-      Serial.print(".");
+      // Serial.print(".");
   }
 
   Serial.println("Connected to wifi");
   Serial.println("\nStarting connection...");
   // if you get a connection, report back via serial:
-  if (client.connect(destinationIp, destinationReceivePort)) {
-    Serial.println("connected");
-    // Make a HTTP request:
-    client.println("Hello from M5StickCPlus");
-    client.println();
-  }
+
+
+
 
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
 
   M5.Lcd.fillScreen(GREEN);
-  delay(500);
+  delay(2000);
   M5.Lcd.fillScreen(BLACK);
 }
 
@@ -91,5 +88,20 @@ void loop() {
     digitalWrite(M5_LED, HIGH);
   }
 
-  // delay(100);
+  if (client.connect(destinationIp, destinationReceivePort)) {
+    Serial.println("connected");
+
+    Serial.println("Sending request");
+    client.println("\n\n");
+    client.read(receiveBuffer, 76800);
+
+    client.stop(); // Close connection after sending request
+    delay(1000);
+  }
+
+  for (int i = 0; i < 76800; i++) {
+    
+  }
+
+
 }
