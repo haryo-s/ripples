@@ -7,6 +7,8 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
+const int frameSize = 19200;
+
 // WIFI SETTINGS
 const char* ssid       = SECRET_SSID;
 const char* password   = SECRET_PASS;
@@ -23,9 +25,11 @@ IPAddress destinationIp(192, 168, 178, 24);
 unsigned int destinationReceivePort = 9999;
 
 WiFiClient client;
+unsigned long lastConnectionTime = 0;              // last time you connected to the server, in milliseconds
+const unsigned long postingInterval = 5L * 1000L; // delay between updates, in milliseconds
 
 // char receiveBuffer[256]; //buffer to hold incoming packet
-uint8_t receiveBuffer[76800]; //buffer to hold incoming packet
+uint8_t receiveBuffer[frameSize]; //buffer to hold incoming packet
 char ReplyBuffer[] = "acknowledged";       // a string to send back
 
 // FLASHHAT SETTINGS
@@ -57,10 +61,11 @@ void setup() {
 
   Serial.println("Connected to wifi");
   Serial.println("\nStarting connection...");
-  // if you get a connection, report back via serial:
 
-
-
+  // if (client.connect(destinationIp, destinationReceivePort)) {
+  //   Serial.println("connected to server");
+  //   client.println("\n\n");
+  // }
 
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
@@ -88,20 +93,40 @@ void loop() {
     digitalWrite(M5_LED, HIGH);
   }
 
+  while (client.available()) {
+    client.read(receiveBuffer, frameSize);
+    Serial.println(receiveBuffer[25]);
+    Serial.println("Hi");
+  }
+
+  for (int i = 0; i < frameSize; i++) {
+    int coord[2];
+    coord[0] = i % 160;
+    coord[1] = i / 160;
+    if (receiveBuffer[i] > 64) {
+      M5.Lcd.drawPixel(coord[0], coord[1], WHITE);
+    }
+    else {
+      M5.Lcd.drawPixel(coord[0], coord[1], BLACK);
+    }
+  }
+
+  if (millis() - lastConnectionTime > postingInterval) {
+    imageBufferRequest();
+  }
+}
+
+void imageBufferRequest() {
+  client.stop();
+
   if (client.connect(destinationIp, destinationReceivePort)) {
-    Serial.println("connected");
+    Serial.println("connected to server");
+    client.println('\n');
 
-    Serial.println("Sending request");
-    client.println("\n\n");
-    client.read(receiveBuffer, 76800);
-
-    client.stop(); // Close connection after sending request
-    delay(1000);
+    lastConnectionTime = millis();
   }
-
-  for (int i = 0; i < 76800; i++) {
-    
+  else {
+    // if you couldn't make a connection:
+    Serial.println("connection failed");
   }
-
-
 }

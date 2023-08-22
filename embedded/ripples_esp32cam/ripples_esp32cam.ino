@@ -8,8 +8,8 @@
 // CAMERA
 // Frame size is 160x120 or 19200b or 19.2kb
 camera_fb_t* fb;
-// const int frameSize = 19200;
-const int frameSize = 76800;
+const int frameSize = 19200;
+// const int frameSize = 76800;
 
 uint8_t* prevFrameBuffer;
 uint8_t* differenceBuffer;
@@ -50,8 +50,6 @@ void setup() {
 }
 
 void loop() {
-  // delay(250); // 40ms or 25fps
-
   fb = esp_camera_fb_get();
 
   if(prevFrameBuffer) {
@@ -81,11 +79,12 @@ void loop() {
       Serial.write(c);                    // print it out the serial monitor
       if (c == '\n') {                    // if the byte is a newline character
         Serial.println("Request received. Replying with differenceBuffer");
-        client.write(differenceBuffer, frameSize);
+        client.write(prevFrameBuffer, frameSize);
+        // client.write(differenceBuffer, frameSize);
+        // Serial.println(String(differenceBuffer[25]));
       }
     }
   }
-
 }
 
 esp_err_t init_camera(){
@@ -109,8 +108,8 @@ esp_err_t init_camera(){
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  // config.frame_size   = FRAMESIZE_QQVGA;   // 160x120
-  config.frame_size   = FRAMESIZE_QVGA; // 320x240
+  config.frame_size   = FRAMESIZE_QQVGA;   // 160x120
+  // config.frame_size   = FRAMESIZE_QVGA; // 320x240
   config.pixel_format = PIXFORMAT_GRAYSCALE; // 1 byte per pixel, 0-255
   // config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
   config.grab_mode    = CAMERA_GRAB_LATEST;
