@@ -14,16 +14,7 @@ const int frameSize = 19200;
 uint8_t* prevFrameBuffer;
 uint8_t* differenceBuffer;
 
-// UDP SETTINGS
-// IPAddress mySendIp(192, 168, 178, 24);
-// unsigned int mySendPort = 7777;
-// unsigned int myReceivePort = 8888;
-
-// IPAddress destinationIp(192, 168, 178, 255);
-// unsigned int destinationReceivePort = 8888;
-
 // TCP Settings
-
 WiFiServer server(9999);
 
 void setup() {
@@ -31,59 +22,74 @@ void setup() {
   Serial.setDebugOutput(true);
   Serial.println();
 
+  // Allocating framebuffers to PSRAM
   prevFrameBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
   differenceBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
 
+  // Connecting to WiFi
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
   }
-
-  server.begin();
   Serial.println("");
   Serial.print("Connected to wifi. My address:");
   IPAddress myAddress = WiFi.localIP();
   Serial.println(myAddress);
+
+  // Starting TCP server
+  server.begin();
   
+  // Starting camera
   init_camera();
 }
 
-void loop() {
+void loop() {  
   fb = esp_camera_fb_get();
-
-  if(prevFrameBuffer) {
-    for (int i = 0; i < frameSize; i++) {
-      uint8_t difference = abs(fb->buf[i] - prevFrameBuffer[i]);
-      differenceBuffer[i] = (difference > 64) ? 1 : 0;
-    }
-  }
-
   if(!fb){
     Serial.println("Camera capture failed");
     return;
   }
   else {
-    if (fb->len == frameSize) {
-      memcpy(prevFrameBuffer, fb->buf, fb->len);
-    }
+    setDifferenceBuffer(fb);
   }
-
   esp_camera_fb_return(fb);
 
   WiFiClient client = server.available();
   if (client && differenceBuffer) {
-    Serial.println("New Client.");           // print a message out the serial port
-    char c = client.read();             // read a byte, then
+    Serial.println("New Client.");        // print a message out the serial port
+    char c = client.read();               // read a byte, then
     if (client.available()) {             // if there's bytes to read from the client,
       Serial.write(c);                    // print it out the serial monitor
       if (c == '\n') {                    // if the byte is a newline character
         Serial.println("Request received. Replying with differenceBuffer");
-        client.write(prevFrameBuffer, frameSize);
-        // client.write(differenceBuffer, frameSize);
+        // client.write(prevFrameBuffer, frameSize);
+        client.write(differenceBuffer, frameSize);
         // Serial.println(String(differenceBuffer[25]));
       }
     }
+  }
+
+  // delay(40);
+
+}
+
+void setDifferenceBuffer(camera_fb_t* frameBuffer) {
+  // First we check if prevFrameBuffer is valid. 
+  // This if statement should only trigger starting the second pass
+  if(prevFrameBuffer) { 
+    // Serial.println("Difference frame buffer updated");
+    for (int i = 0; i < frameSize; i++) {
+      uint8_t difference = abs(frameBuffer->buf[i] - prevFrameBuffer[i]);
+      differenceBuffer[i] = (difference > 64) ? 1 : 0;
+    }
+  }
+
+  // Then, if the length is the same, copy from the frameBuffer to prevFrameBuffer
+  // One issue might be in the length is not crrect
+  if (frameBuffer->len == frameSize) {
+    // Serial.println("Previous frame buffer updated");
+    memcpy(prevFrameBuffer, frameBuffer->buf, fb->len);
   }
 }
 
