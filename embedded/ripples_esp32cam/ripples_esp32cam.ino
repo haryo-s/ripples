@@ -65,7 +65,7 @@ void loop() {
         Serial.println("Request received. Replying with differenceBuffer");
         // client.write(prevFrameBuffer, frameSize);
         client.write(differenceBuffer, frameSize);
-        // Serial.println(String(differenceBuffer[25]));
+        Serial.println(String(differenceBuffer[25]));
       }
     }
   }

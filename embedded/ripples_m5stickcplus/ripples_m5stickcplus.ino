@@ -62,11 +62,6 @@ void setup() {
   Serial.println("Connected to wifi");
   Serial.println("\nStarting connection...");
 
-  // if (client.connect(destinationIp, destinationReceivePort)) {
-  //   Serial.println("connected to server");
-  //   client.println("\n\n");
-  // }
-
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
 
@@ -93,27 +88,37 @@ void loop() {
     digitalWrite(M5_LED, HIGH);
   }
 
-  while (client.available()) {
-    client.read(receiveBuffer, frameSize);
-    Serial.println(receiveBuffer[25]);
-    Serial.println("Hi");
+  if (client.connect(destinationIp, destinationReceivePort) == 1) {
+    Serial.println("connected to server");
+    client.println("\n\n");
+    delay(500);
+    if (client.read(receiveBuffer, frameSize) != 0){
+      Serial.println(receiveBuffer[25]);
+      Serial.println("Hi");
+    }
   }
 
   for (int i = 0; i < frameSize; i++) {
     int coord[2];
     coord[0] = i % 160;
     coord[1] = i / 160;
-    if (receiveBuffer[i] > 64) {
+
+    if (receiveBuffer[i] == 1) {
       M5.Lcd.drawPixel(coord[0], coord[1], WHITE);
+      // Serial.println("Coordinates" + String(coord[0]) + ", " + String(coord[1]));
     }
     else {
       M5.Lcd.drawPixel(coord[0], coord[1], BLACK);
     }
   }
 
-  if (millis() - lastConnectionTime > postingInterval) {
-    imageBufferRequest();
-  }
+  client.stop();
+
+  // if (millis() - lastConnectionTime > postingInterval) {
+  //   imageBufferRequest();
+  // }
+
+
 }
 
 void imageBufferRequest() {
