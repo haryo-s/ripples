@@ -7,7 +7,8 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-const int frameSize = 19200;
+const int frameSize = 9216;
+// const int frameSize = 19200;
 
 // WIFI SETTINGS
 const char* ssid       = SECRET_SSID;
@@ -100,8 +101,8 @@ void loop() {
 
   for (int i = 0; i < frameSize; i++) {
     int coord[2];
-    coord[0] = i % 160;
-    coord[1] = i / 160;
+    coord[0] = i % 96; //160 is referring to width
+    coord[1] = i / 96;
 
     if (receiveBuffer[i] == 1) {
       M5.Lcd.drawPixel(coord[0], coord[1], WHITE);

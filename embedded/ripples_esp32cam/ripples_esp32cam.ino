@@ -7,8 +7,11 @@
 
 // CAMERA
 // Frame size is 160x120 or 19200b or 19.2kb
+// Frame size is 96*96 or 9216 or 9.216kb
 camera_fb_t* fb;
-const int frameSize = 19200;
+
+const int frameSize = 9216;
+// const int frameSize = 19200;
 // const int frameSize = 76800;
 
 uint8_t* prevFrameBuffer;
@@ -114,7 +117,8 @@ esp_err_t init_camera(){
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  config.frame_size   = FRAMESIZE_QQVGA;   // 160x120
+  config.frame_size   = FRAMESIZE_96X96;   // 96x96
+  // config.frame_size   = FRAMESIZE_QQVGA;   // 160x120
   // config.frame_size   = FRAMESIZE_QVGA; // 320x240
   config.pixel_format = PIXFORMAT_GRAYSCALE; // 1 byte per pixel, 0-255
   // config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
