@@ -14,6 +14,8 @@ const int frameSize = 9216;
 // const int frameSize = 19200;
 // const int frameSize = 76800;
 
+const int differenceThreshold = 128;
+
 uint8_t* prevFrameBuffer;
 uint8_t* differenceBuffer;
 
@@ -84,7 +86,7 @@ void setDifferenceBuffer(camera_fb_t* frameBuffer) {
     // Serial.println("Difference frame buffer updated");
     for (int i = 0; i < frameSize; i++) {
       uint8_t difference = abs(frameBuffer->buf[i] - prevFrameBuffer[i]);
-      differenceBuffer[i] = (difference > 64) ? 1 : 0;
+      differenceBuffer[i] = (difference > differenceThreshold) ? 1 : 0;
     }
   }
 

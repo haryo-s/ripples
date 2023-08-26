@@ -92,7 +92,7 @@ void loop() {
   if (client.connect(destinationIp, destinationReceivePort) == 1) {
     Serial.println("connected to server");
     client.println("\n\n");
-    delay(500);
+    delay(250);
     if (client.read(receiveBuffer, frameSize) != 0){
       Serial.println(receiveBuffer[25]);
       Serial.println("Hi");
