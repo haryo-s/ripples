@@ -26,6 +26,7 @@ void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
+  Serial.println(ets_get_cpu_frequency());
 
   // Allocating framebuffers to PSRAM
   prevFrameBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
@@ -96,6 +97,7 @@ void setDifferenceBuffer(camera_fb_t* frameBuffer) {
     // Serial.println("Previous frame buffer updated");
     memcpy(prevFrameBuffer, frameBuffer->buf, fb->len);
   }
+  Serial.println("Repeat");
 }
 
 esp_err_t init_camera(){
