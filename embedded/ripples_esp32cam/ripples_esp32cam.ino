@@ -4,6 +4,23 @@
 #include "secrets.h"
 #include "camera_pins.h"
 #include <WiFi.h>
+/*
+Notes for next phase with 2 ESP32CAM boards
+
+For performance and stability reasons, it might be interesting to use a ping-pong model:
+
+At setup both grab a frame and save it to prevFrameBuffer
+
+CAM_A sends request to CAM_B
+CAM_B takes a new frame, compares it to prevFrameBuffer and saves the result to differenceBuffer
+CAM_B sends it to CAM_A
+CAM_A receives it, does it stuff and sends a packet to CAM_B that it's finished
+CAM_B, on receiving the finished signal, then sends a request to CAM_A
+CAM_A takes a new frame, compares it to prevFrameBuffer and saves the result to differenceBuffer
+CAM_A sends it to CAM_B
+CAM_B receives it, does it stuff and sends a packet to CAM_A that it's finished
+Repeat
+*/
 
 // CAMERA
 // Frame size is 160x120 or 19200b or 19.2kb
@@ -48,9 +65,23 @@ void setup() {
   
   // Starting camera
   init_camera();
+
+  // On startup, we grab a first frame and set that as the prevFrameBuffer
+  fb = esp_camera_fb_get();
+  if(!prevFrameBuffer) {
+    Serial.println("Camera capture failed");
+    return;
+  }
+  else {
+    memcpy(prevFrameBuffer, fb->buf, fb->len);
+    Serial.println("Previous frame buffer saved");
+  }
+  esp_camera_fb_return(fb);
+
 }
 
 void loop() {  
+
   fb = esp_camera_fb_get();
   if(!fb){
     Serial.println("Camera capture failed");
@@ -58,9 +89,16 @@ void loop() {
   }
   else {
     setDifferenceBuffer(fb);
+    // Then, if the length is the same, copy from the frameBuffer to prevFrameBuffer
+    // One issue might be in the length is not crrect
+    if (fb->len == frameSize) {
+      Serial.println("Previous frame buffer updated");
+      memcpy(prevFrameBuffer, fb->buf, fb->len);
+    }
   }
   esp_camera_fb_return(fb);
 
+  // TODO: This WiFi transfer might be done better with an async WebServer
   WiFiClient client = server.available();
   if (client && differenceBuffer) {
     Serial.println("New Client.");        // print a message out the serial port
@@ -80,24 +118,15 @@ void loop() {
 
 }
 
+//TODO: This could return a bool for success or failure
 void setDifferenceBuffer(camera_fb_t* frameBuffer) {
   // First we check if prevFrameBuffer is valid. 
-  // This if statement should only trigger starting the second pass
   if(prevFrameBuffer) { 
-    // Serial.println("Difference frame buffer updated");
     for (int i = 0; i < frameSize; i++) {
       uint8_t difference = abs(frameBuffer->buf[i] - prevFrameBuffer[i]);
       differenceBuffer[i] = (difference > differenceThreshold) ? 1 : 0;
     }
   }
-
-  // Then, if the length is the same, copy from the frameBuffer to prevFrameBuffer
-  // One issue might be in the length is not crrect
-  if (frameBuffer->len == frameSize) {
-    // Serial.println("Previous frame buffer updated");
-    memcpy(prevFrameBuffer, frameBuffer->buf, fb->len);
-  }
-  Serial.println("Repeat");
 }
 
 esp_err_t init_camera(){
@@ -129,7 +158,7 @@ esp_err_t init_camera(){
   config.grab_mode    = CAMERA_GRAB_LATEST;
   config.fb_location  = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 12;
-  config.fb_count     = 1;
+  config.fb_count     = 2;
 
   return esp_camera_init(&config);
 }
