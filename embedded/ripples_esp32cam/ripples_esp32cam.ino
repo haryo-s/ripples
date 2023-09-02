@@ -27,14 +27,38 @@ Repeat
 // Frame size is 96*96 or 9216 or 9.216kb
 camera_fb_t* fb;
 
-const int frameSize = 9216;
-// const int frameSize = 19200;
-// const int frameSize = 76800;
+//-------------------------------------------
+// Constants
+//
+// constexpr := "This is a compile time constant"
+// static := "This symbol is only for this .cpp file"
+//-------------------------------------------
+static const constexpr int FRAME_SIZE = 96 * 96;
+static const constexpr int DIFFERENCE_THRESHOLD = 128;
 
-const int differenceThreshold = 128;
+//-------------------------------------------
+// Global data
+//
+// (I like to put stuff in structs to qualify 
+//  names.  This is making one instance of a struct with
+//  these fields that is static [only accessible from this .cpp])
+//-------------------------------------------
+static struct 
+{
+  // Previous frame we got from the camera.  
+  // null if we haven't ever gotten one
+  camera_fb_t* previousFrame = nullptr;
 
-uint8_t* prevFrameBuffer;
-uint8_t* differenceBuffer;
+  // FRAME_SIZE long array of 0/1 values, representing whether that pixel
+  // was different enough, allocated in PSRAM
+  //
+  // (You could also do this without a heap via the appropriate linker
+  // instruction to tell it to place a plain `uint8_t differenceBuffer[FRAME_SIZE]`,
+  // or better `std::array<uint8_t, FRAME_SIZE>` (if you have C++11) in PSRAM)
+  //
+  // But a heap allocation is fine too.
+  uint8_t* differenceBuffer = nullptr;
+} globals;
 
 // TCP Settings
 WiFiServer server(9999);
@@ -43,11 +67,11 @@ void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
-  Serial.println(ets_get_cpu_frequency());
 
-  // Allocating framebuffers to PSRAM
-  prevFrameBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
-  differenceBuffer = (uint8_t*) ps_malloc (frameSize * sizeof (uint8_t));
+  // Allocate space for differences in PSRAM & zero it. The zeroing is to make it have
+  // non-trash values before we have two good camera frames and write it normally
+  globals.differenceBuffer = (uint8_t*)ps_malloc(FRAME_SIZE * sizeof(uint8_t));
+  memset(globals.differenceBuffer, 0, FRAME_SIZE * sizeof(uint8_t));
 
   // Connecting to WiFi
   WiFi.begin(SECRET_SSID, SECRET_PASS);
@@ -65,69 +89,74 @@ void setup() {
   
   // Starting camera
   init_camera();
-
-  // On startup, we grab a first frame and set that as the prevFrameBuffer
-  fb = esp_camera_fb_get();
-  if(!prevFrameBuffer) {
-    Serial.println("Camera capture failed");
-    return;
-  }
-  else {
-    memcpy(prevFrameBuffer, fb->buf, fb->len);
-    Serial.println("Previous frame buffer saved");
-  }
-  esp_camera_fb_return(fb);
-
 }
 
 void loop() {  
-
-  fb = esp_camera_fb_get();
-  if(!fb){
+  // Acquire a new frame
+  camera_fb_t* newFrame = esp_camera_fb_get();
+  if (newFrame == nullptr)
+  {
+    // esp32-camera returns nullptr when camera access times out.
+    // Or if there were no more buffers left, but that shouldn't happen
     Serial.println("Camera capture failed");
     return;
   }
-  else {
-    setDifferenceBuffer(fb);
-    // Then, if the length is the same, copy from the frameBuffer to prevFrameBuffer
-    // One issue might be in the length is not crrect
-    if (fb->len == frameSize) {
-      Serial.println("Previous frame buffer updated");
-      memcpy(prevFrameBuffer, fb->buf, fb->len);
-    }
+
+  // If we don't have a previous frame, there's no differences to compute.
+  // This frame becomes our previous frame and we're done
+  if (globals.previousFrame == nullptr)
+  {
+    globals.previousFrame = newFrame;
+    return;
   }
-  esp_camera_fb_return(fb);
+
+  // Compute the difference
+  for (auto pxNum = 0; pxNum < FRAME_SIZE; ++pxNum)
+  {
+    // Doing this in wider signed math probably isn't any slower than doing it 
+    // with conditionals
+    const auto newPx = (int)newFrame->buf[pxNum];
+    const auto oldPx = (int)globals.previousFrame->buf[pxNum];
+    const auto delta = newPx - oldPx;
+    const auto absDelta = std::abs(delta);
+    globals.differenceBuffer[pxNum] = (uint8_t)((absDelta > DIFFERENCE_THRESHOLD) ? 1u : 0u);
+  }
+
+  // Old frame -> return to camera
+  // New frame -> old frame
+  // We're only shuffling pointers around, not copying array content
+  esp_camera_fb_return(globals.previousFrame);
+  globals.previousFrame = newFrame;
 
   // TODO: This WiFi transfer might be done better with an async WebServer
-  WiFiClient client = server.available();
-  if (client && differenceBuffer) {
-    Serial.println("New Client.");        // print a message out the serial port
-    char c = client.read();               // read a byte, then
-    if (client.available()) {             // if there's bytes to read from the client,
-      Serial.write(c);                    // print it out the serial monitor
-      if (c == '\n') {                    // if the byte is a newline character
-        Serial.println("Request received. Replying with differenceBuffer");
-        // client.write(prevFrameBuffer, frameSize);
-        client.write(differenceBuffer, frameSize);
-        Serial.println(String(differenceBuffer[25]));
-      }
-    }
-  }
-
-  // delay(40);
+  // WiFiClient client = server.available();
+  // if (client && differenceBuffer) {
+  //   Serial.println("New Client.");        // print a message out the serial port
+  //   char c = client.read();               // read a byte, then
+  //   if (client.available()) {             // if there's bytes to read from the client,
+  //     Serial.write(c);                    // print it out the serial monitor
+  //     if (c == '\n') {                    // if the byte is a newline character
+  //       Serial.println("Request received. Replying with differenceBuffer");
+  //       // client.write(prevFrameBuffer, frameSize);
+  //       client.write(differenceBuffer, frameSize);
+  //       Serial.println(String(differenceBuffer[25]));
+  //     }
+  //   }
+  // }
+  Serial.println("Loop");
 
 }
 
-//TODO: This could return a bool for success or failure
-void setDifferenceBuffer(camera_fb_t* frameBuffer) {
-  // First we check if prevFrameBuffer is valid. 
-  if(prevFrameBuffer) { 
-    for (int i = 0; i < frameSize; i++) {
-      uint8_t difference = abs(frameBuffer->buf[i] - prevFrameBuffer[i]);
-      differenceBuffer[i] = (difference > differenceThreshold) ? 1 : 0;
-    }
-  }
-}
+// //TODO: This could return a bool for success or failure
+// void setDifferenceBuffer(camera_fb_t* frameBuffer) {
+//   // First we check if prevFrameBuffer is valid. 
+//   if(prevFrameBuffer) { 
+//     for (int i = 0; i < frameSize; i++) {
+//       uint8_t difference = abs(frameBuffer->buf[i] - prevFrameBuffer[i]);
+//       differenceBuffer[i] = (difference > differenceThreshold) ? 1 : 0;
+//     }
+//   }
+// }
 
 esp_err_t init_camera(){
   camera_config_t config;
