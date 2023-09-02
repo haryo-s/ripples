@@ -12,7 +12,7 @@ sock = socket.socket(socket.AF_INET,
 sock.bind((UDP_IP, UDP_PORT))
 
 while True:
-    string_data, addr = sock.recvfrom(20000)
+    string_data, addr = sock.recvfrom(4096)
     data = numpy.fromstring(string_data, dtype='uint8')
     decoded_image = cv2.imdecode(data,1)
     cv2.imshow("Receiver", decoded_image)
