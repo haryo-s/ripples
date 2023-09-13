@@ -21,4 +21,4 @@ while True:
     if key == 27: # exit on ESC
         break
 
-cv2.destroyWindow("preview")
+cv2.destroyWindow("Receiver")
