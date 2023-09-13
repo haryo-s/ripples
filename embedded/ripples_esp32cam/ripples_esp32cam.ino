@@ -183,7 +183,7 @@ esp_err_t init_camera(){
   // config.frame_size   = FRAMESIZE_QQVGA;   // 160x120
   // config.frame_size   = FRAMESIZE_QVGA; // 320x240
   config.pixel_format = PIXFORMAT_GRAYSCALE; // 1 byte per pixel, 0-255
-  // config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
+  config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
   config.grab_mode    = CAMERA_GRAB_LATEST;
   config.fb_location  = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 12;
