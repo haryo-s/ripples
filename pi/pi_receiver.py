@@ -22,12 +22,18 @@ class RipplesDisplay(SampleBase):
         canvas = self.matrix.CreateFrameCanvas()
         while True:
             with urllib.request.urlopen(URL) as response:
+                print("Got a response")
                 boolean_array = bytes_to_boolean_array(response.read())
+                print(str(len(boolean_array)))
+
                 if len(boolean_array) == PANEL_WIDTH*PANEL_HEIGHT:
+                    print("Array is correct length")
                     for i in boolean_array:
                         if i == True:
+                            print("True!")
                             canvas.SetPixel(i % PANEL_HEIGHT, i / PANEL_WIDTH, 255, 255, 255)
                         else:
+                            print("Not true!")
                             canvas.SetPixel(i % PANEL_HEIGHT, i / PANEL_WIDTH, 0, 0, 0)
 
     # int coord[2];
