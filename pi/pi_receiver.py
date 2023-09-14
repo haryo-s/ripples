@@ -1,22 +1,9 @@
-import cv2
-import socket
+from samplebase import SampleBase
+import urllib.request
 
-print("Launch")
-cv2.namedWindow("Receiver")
-print("Launch2")
-
-RECEIVER_UDP_IP = "127.0.0.1"
-RECEIVER_UDP_PORT = 61252
-print("Launch3")
-
-# UDP Packet structure from Ripples
-# 16 bytes: binary array (for neoflash hat only last 126 bits required)
-
-sock = socket.socket(socket.AF_INET,
-                     socket.SOCK_DGRAM)
-                     
-sock.bind((RECEIVER_UDP_IP, RECEIVER_UDP_PORT))
-print("Launch4")
+PANEL_WIDTH = 64
+PANEL_HEIGHT = 32
+URL = 'http://127.0.0.1:5000'
 
 def bytes_to_boolean_array(data_bytes: bytes):
     # Convert bytes into binary representation
@@ -26,22 +13,28 @@ def bytes_to_boolean_array(data_bytes: bytes):
     boolean_array = [bit == '1' for bit in binary_string]
 
     return boolean_array
-print("Launch5")
 
-while True:
-    print("Launch6")
+class RipplesDisplay(SampleBase):
+    def __init__(self, *args, **kwargs):
+        super(RipplesDisplay, self).__init__(*args, **kwargs)
 
-    packet, addr = sock.recvfrom(2048)
-    print("Launch7")
+    def run(self):
+        canvas = self.matrix.CreateFrameCanvas()
+        while True:
+            with urllib.request.urlopen(URL) as response:
+                boolean_array = bytes_to_boolean_array(response.read())
+                if len(boolean_array) == PANEL_WIDTH*PANEL_HEIGHT:
+                    for i in boolean_array:
+                        if i == True:
+                            canvas.SetPixel(i % PANEL_HEIGHT, i / PANEL_WIDTH, 255, 255, 255)
+                        else:
+                            canvas.SetPixel(i % PANEL_HEIGHT, i / PANEL_WIDTH, 0, 0, 0)
 
-    print(packet)
-    print(type(packet))
+    # int coord[2];
+    # coord[0] = i % 96; //160 is referring to width
+    # coord[1] = i / 96;
 
-    boolean_array = bytes_to_boolean_array(packet)
-    print(boolean_array)
-
-    key = cv2.waitKey(20)
-    if key == 27: # exit on ESC
-        break
-
-cv2.destroyWindow("Receiver")
+if __name__ == "__main__":
+    ripples_display = RipplesDisplay()
+    if (not ripples_display.process()):
+        ripples_display.print_help()
