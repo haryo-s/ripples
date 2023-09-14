@@ -1,62 +1,57 @@
+from flask import Flask, render_template, Response
 import cv2
-import socket
 
-UDP_IP = "192.168.178.255"
-UDP_PORT = 61252
+app = Flask(__name__)
 
-# UDP_IP = "192.168.178.21"
-# UDP_PORT = 8888
+LEDPANEL_DIMENSIONS = (64, 32)
+DIFF_THRESHOLD = 32
 
-sock = socket.socket(socket.AF_INET,
-                     socket.SOCK_DGRAM)
+camera = cv2.VideoCapture(0)  # use 0 for web camera
 
-vc = cv2.VideoCapture(0)
-
-if vc.isOpened(): # try to get the first frame
-    # First set both frames 
-    rval, frame1 = vc.read()
+def gen_frames():  # generate frame by frame from camera
+    while True:
+        # Capture frame-by-frame
+        success, frame = camera.read()  # read the camera frame
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
+            
+def get_diff_frame():
+    return_val, frame1 = camera.read()
     frame2 = frame1
-else:
-    rval = False
 
-while rval:
-    # Ok now we load frame2
-    rval, frame2 = vc.read()
+    if return_val:
+        return_val, frame1 = camera.read()
+        diff_image = cv2.absdiff(cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY), cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY))
+
+        diff_image_resized = cv2.resize(diff_image, LEDPANEL_DIMENSIONS, interpolation = cv2.INTER_AREA)
+
+        sendbuffer = ""
+
+        for x in diff_image_resized:
+            for y in x:
+                if y > DIFF_THRESHOLD:
+                    sendbuffer += str(1)
+                else:
+                    sendbuffer += str(0)
     
-    # For diff, we subtract frame1 from frame2 and absolute the values
-    diff_image = cv2.absdiff(cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY), cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY))
+    return sendbuffer
 
-    frame1 = frame2
-
-    scale_percent = 25
-    # end_width = int(diff_image.shape[1] * scale_percent / 100)
-    end_width = int(64)
-    # end_height = int(diff_image.shape[0] * scale_percent / 100)
-    end_height = int(32)
-    dimensions = (end_width, end_height)
-
-    diff_image_resized = cv2.resize(diff_image, dimensions, interpolation = cv2.INTER_AREA)
-
-    sendbuffer = ""
-
-    for x in diff_image_resized:
-        for y in x:
-            if y > 30:
-                sendbuffer += str(1)
-            else:
-                sendbuffer += str(0)
+@app.route('/video_feed')
+def video_feed():
+    #Video streaming route. Put this in the src attribute of an img tag
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-    data = "Hello from Python"
-    data_string = bytes(sendbuffer, 'utf-8')
+@app.route('/')
+def index():
+    sendbuffer = get_diff_frame()
+    return sendbuffer
 
-    sock.sendto(data_string, (UDP_IP, UDP_PORT))
 
-    # Clear the buffer
-    sendbuffer = ""
-
-    key = cv2.waitKey(20)
-    if key == 27: # exit on ESC
-        break
-
-vc.release()
+if __name__ == '__main__':
+    app.run(debug=True)
