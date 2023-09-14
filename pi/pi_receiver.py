@@ -1,18 +1,23 @@
+#!/usr/bin/env python
+
 from samplebase import SampleBase
 import urllib.request
+import time
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 32
 URL = 'http://192.168.178.22:5000'
 
 def bytes_to_boolean_array(data_bytes: bytes):
+    #print(data_bytes)
     # Convert bytes into binary representation
-    binary_string = ''.join(format(byte, '08b') for byte in data_bytes)
+    #binary_string = ''.join(format(byte, '08b') for byte in data_bytes)
 
     # Create a boolean array based on the binary representation
-    boolean_array = [bit == '1' for bit in binary_string]
+    #boolean_array = [bit == '1' for bit in binary_string]
 
-    return boolean_array
+    #return boolean_array
+    return str(data_bytes, 'UTF-8')
 
 class RipplesDisplay(SampleBase):
     def __init__(self, *args, **kwargs):
@@ -20,22 +25,24 @@ class RipplesDisplay(SampleBase):
 
     def run(self):
         canvas = self.matrix.CreateFrameCanvas()
+        print(canvas.width)
+        print(canvas.height)
         while True:
             with urllib.request.urlopen(URL) as response:
                 print("Got a response")
                 boolean_array = bytes_to_boolean_array(response.read())
-                print(str(len(boolean_array)))
+                canvas.SetPixel(5, 5, 255, 255, 255)
 
                 if len(boolean_array) == PANEL_WIDTH*PANEL_HEIGHT:
                     print("Array is correct length")
-                    for i in boolean_array:
-                        if i == True:
+                    for idx, x in enumerate(boolean_array):
+                        if x == "1":
                             print("True!")
-                            canvas.SetPixel(i % PANEL_HEIGHT, i / PANEL_WIDTH, 255, 255, 255)
+                            canvas.SetPixel(idx / canvas.width, idx % canvas.width, 255, 255, 255)
                         else:
                             print("Not true!")
-                            canvas.SetPixel(i % PANEL_HEIGHT, i / PANEL_WIDTH, 0, 0, 0)
-
+                            canvas.SetPixel(idx / canvas.width, idx % canvas.width, 0, 0, 0)
+            time.sleep(1)
     # int coord[2];
     # coord[0] = i % 96; //160 is referring to width
     # coord[1] = i / 96;
