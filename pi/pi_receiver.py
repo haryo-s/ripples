@@ -3,7 +3,7 @@ import urllib.request
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 32
-URL = 'http://127.0.0.1:5000'
+URL = 'http://192.168.178.22:5000'
 
 def bytes_to_boolean_array(data_bytes: bytes):
     # Convert bytes into binary representation
