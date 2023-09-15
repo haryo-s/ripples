@@ -24,25 +24,21 @@ class RipplesDisplay(SampleBase):
         super(RipplesDisplay, self).__init__(*args, **kwargs)
 
     def run(self):
-        canvas = self.matrix.CreateFrameCanvas()
-        print(canvas.width)
-        print(canvas.height)
+        self.offscreen_canvas = self.matrix.CreateFrameCanvas()
+        print(self.offscreen_canvas.width)
+        print(self.offscreen_canvas.height)
         while True:
             with urllib.request.urlopen(URL) as response:
-                print("Got a response")
                 boolean_array = bytes_to_boolean_array(response.read())
-                canvas.SetPixel(5, 5, 255, 255, 255)
+                self.offscreen_canvas.SetPixel(5, 5, 255, 255, 255)
 
                 if len(boolean_array) == PANEL_WIDTH*PANEL_HEIGHT:
-                    print("Array is correct length")
                     for idx, x in enumerate(boolean_array):
                         if x == "1":
-                            print("True!")
-                            canvas.SetPixel(idx / canvas.width, idx % canvas.width, 255, 255, 255)
+                            self.offscreen_canvas.SetPixel(idx / self.offscreen_canvas.width, idx % self.offscreen_canvas.width, 128, 128, 128)
                         else:
-                            print("Not true!")
-                            canvas.SetPixel(idx / canvas.width, idx % canvas.width, 0, 0, 0)
-            time.sleep(1)
+                            self.offscreen_canvas.SetPixel(idx / self.offscreen_canvas.width, idx % self.offscreen_canvas.width, 0, 0, 0)
+            self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
     # int coord[2];
     # coord[0] = i % 96; //160 is referring to width
     # coord[1] = i / 96;
