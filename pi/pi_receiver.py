@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from samplebase import SampleBase
+from random import randrange
 import urllib.request
 import time
 
@@ -35,13 +36,11 @@ class RipplesDisplay(SampleBase):
                 if len(boolean_array) == PANEL_WIDTH*PANEL_HEIGHT:
                     for idx, x in enumerate(boolean_array):
                         if x == "1":
-                            self.offscreen_canvas.SetPixel(idx / self.offscreen_canvas.width, idx % self.offscreen_canvas.width, 128, 128, 128)
+                            self.offscreen_canvas.SetPixel(idx % self.offscreen_canvas.width, idx / self.offscreen_canvas.width, randrange(255), randrange(255), randrange(255))
                         else:
-                            self.offscreen_canvas.SetPixel(idx / self.offscreen_canvas.width, idx % self.offscreen_canvas.width, 0, 0, 0)
+                            self.offscreen_canvas.SetPixel(idx % self.offscreen_canvas.width, idx / self.offscreen_canvas.width, 0, 0, 0)
             self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
-    # int coord[2];
-    # coord[0] = i % 96; //160 is referring to width
-    # coord[1] = i / 96;
+            # time.sleep(0.02)
 
 if __name__ == "__main__":
     ripples_display = RipplesDisplay()

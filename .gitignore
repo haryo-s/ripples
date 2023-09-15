@@ -2,3 +2,4 @@
 /embedded/ripples_*/esp32.svd
 /embedded/ripples_*/debug.cfg
 /embedded/ripples_*/debug_custom.json
+*.pyc
