@@ -5,42 +5,58 @@ from random import randrange
 import urllib.request
 import time
 
-PANEL_WIDTH = 64
-PANEL_HEIGHT = 32
-URL = 'http://192.168.178.22:5000'
 
-def bytes_to_boolean_array(data_bytes: bytes):
-    #print(data_bytes)
-    # Convert bytes into binary representation
-    #binary_string = ''.join(format(byte, '08b') for byte in data_bytes)
 
-    # Create a boolean array based on the binary representation
-    #boolean_array = [bit == '1' for bit in binary_string]
 
-    #return boolean_array
-    return str(data_bytes, 'UTF-8')
 
 class RipplesDisplay(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RipplesDisplay, self).__init__(*args, **kwargs)
+        self.PANEL_WIDTH  = 64
+        self.PANEL_HEIGHT = 32
+        self.PANEL_LENGTH = self.PANEL_WIDTH * self.PANEL_HEIGHT
+        self.URL_LOCAL    = 'http://127.0.0.1:5000'
+        self.URL_REMOTE   = 'http://192.168.178.22:5000'
+        self.USE_LOCAL    = False
+        self.USE_REMOTE   = True
 
     def run(self):
         self.offscreen_canvas = self.matrix.CreateFrameCanvas()
-        print(self.offscreen_canvas.width)
-        print(self.offscreen_canvas.height)
+        self.width = self.offscreen_canvas.width
+        self.height = self.offscreen_canvas.height
+        
         while True:
-            with urllib.request.urlopen(URL) as response:
-                boolean_array = bytes_to_boolean_array(response.read())
-                self.offscreen_canvas.SetPixel(5, 5, 255, 255, 255)
+            if self.USE_LOCAL:
+                local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
+                if len(local_difference_image) != self.PANEL_LENGTH:
+                    break
+            if self.USE_REMOTE:
+                remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
+                if len(remote_difference_image) != self.PANEL_LENGTH:
+                    break
 
-                if len(boolean_array) == PANEL_WIDTH*PANEL_HEIGHT:
-                    for idx, x in enumerate(boolean_array):
-                        if x == "1":
-                            self.offscreen_canvas.SetPixel(idx % self.offscreen_canvas.width, idx / self.offscreen_canvas.width, randrange(255), randrange(255), randrange(255))
-                        else:
-                            self.offscreen_canvas.SetPixel(idx % self.offscreen_canvas.width, idx / self.offscreen_canvas.width, 0, 0, 0)
+            # Only use remote and display its difference image
+            if self.USE_LOCAL == False & self.USE_REMOTE == True:
+                self.display_difference_image(remote_difference_image)
+            # Only use local and display its difference image
+            if self.USE_LOCAL == True & self.USE_REMOTE == False:
+                self.display_difference_image(remote_difference_image)
+            
             self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
-            # time.sleep(0.02)
+
+    def display_difference_image(self, difference_bool_array: str):
+        for idx, x in enumerate(difference_bool_array):
+            if x == "1":
+                self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+            else:
+                self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+    
+    def bytes_to_boolean_array(self, data_bytes: bytes):
+        return str(data_bytes, 'UTF-8')
+
+    def get_camera_difference_image(self, url: str):
+        with urllib.request.urlopen(url) as response:
+            return self.bytes_to_boolean_array(response.read())
 
 if __name__ == "__main__":
     ripples_display = RipplesDisplay()
