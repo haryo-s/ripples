@@ -5,10 +5,6 @@ from random import randrange
 import urllib.request
 import time
 
-
-
-
-
 class RipplesDisplay(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RipplesDisplay, self).__init__(*args, **kwargs)
@@ -17,8 +13,8 @@ class RipplesDisplay(SampleBase):
         self.PANEL_LENGTH = self.PANEL_WIDTH * self.PANEL_HEIGHT
         self.URL_LOCAL    = 'http://127.0.0.1:5000'
         self.URL_REMOTE   = 'http://192.168.178.22:5000'
-        self.USE_LOCAL    = False
-        self.USE_REMOTE   = True
+        self.USE_LOCAL    = True
+        self.USE_REMOTE   = False
 
     def run(self):
         self.offscreen_canvas = self.matrix.CreateFrameCanvas()
@@ -28,20 +24,24 @@ class RipplesDisplay(SampleBase):
         while True:
             if self.USE_LOCAL:
                 local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
+                print("Getting local image")
                 if len(local_difference_image) != self.PANEL_LENGTH:
                     break
             if self.USE_REMOTE:
+                print("Getting remote image")
                 remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
                 if len(remote_difference_image) != self.PANEL_LENGTH:
                     break
 
-            # Only use remote and display its difference image
-            if self.USE_LOCAL == False & self.USE_REMOTE == True:
-                self.display_difference_image(remote_difference_image)
             # Only use local and display its difference image
-            if self.USE_LOCAL == True & self.USE_REMOTE == False:
+            if self.USE_LOCAL == True and self.USE_REMOTE == False:
+                self.display_difference_image(local_difference_image)
+                print("Using local only")
+            # Only use remote and display its difference image
+            if self.USE_LOCAL == False and self.USE_REMOTE == True:
                 self.display_difference_image(remote_difference_image)
-            
+                print("Using remote only")
+
             self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
     def display_difference_image(self, difference_bool_array: str):

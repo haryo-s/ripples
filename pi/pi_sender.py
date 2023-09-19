@@ -12,13 +12,13 @@ def get_diff_frame():
     return_val, frame1 = camera.read()
     frame2 = frame1
 
+    sendbuffer = ""
+
     if return_val:
         return_val, frame1 = camera.read()
         diff_image = cv2.absdiff(cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY), cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY))
 
         diff_image_resized = cv2.resize(diff_image, LEDPANEL_DIMENSIONS, interpolation = cv2.INTER_AREA)
-
-        sendbuffer = ""
 
         for x in diff_image_resized:
             for y in x:
