@@ -6,7 +6,9 @@ app = Flask(__name__)
 LEDPANEL_DIMENSIONS = (64, 32)
 DIFF_THRESHOLD = 32
 
-camera = cv2.VideoCapture(0)  # use 0 for web camera
+#camera = cv2.VideoCapture(0)  # use 0 for web camera
+#camera = cv2.VideoCapture(-1)
+camera = cv2.VideoCapture('/dev/video0')
             
 def get_diff_frame():
     return_val, frame1 = camera.read()
