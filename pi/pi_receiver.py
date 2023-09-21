@@ -14,42 +14,66 @@ class RipplesDisplay(SampleBase):
         self.URL_LOCAL    = 'http://127.0.0.1:5000'
         self.URL_REMOTE   = 'http://192.168.178.22:5000'
         self.USE_LOCAL    = True
-        self.USE_REMOTE   = False
+        self.USE_REMOTE   = True
 
     def run(self):
         self.offscreen_canvas = self.matrix.CreateFrameCanvas()
         self.width = self.offscreen_canvas.width
         self.height = self.offscreen_canvas.height
+
+        self.local_difference_image = ""
+        self.remote_difference_image = ""
         
         while True:
             if self.USE_LOCAL:
-                local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
+                self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
                 print("Getting local image")
-                if len(local_difference_image) != self.PANEL_LENGTH:
+                if len(self.local_difference_image) != self.PANEL_LENGTH:
                     break
             if self.USE_REMOTE:
                 print("Getting remote image")
-                remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
-                if len(remote_difference_image) != self.PANEL_LENGTH:
+                self.remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
+                if len(self.remote_difference_image) != self.PANEL_LENGTH:
                     break
 
             # Only use local and display its difference image
             if self.USE_LOCAL == True and self.USE_REMOTE == False:
-                self.display_difference_image(local_difference_image)
+                self.display_difference_image(self.local_difference_image)
                 print("Using local only")
             # Only use remote and display its difference image
             if self.USE_LOCAL == False and self.USE_REMOTE == True:
-                self.display_difference_image(remote_difference_image)
+                self.display_difference_image(self.remote_difference_image)
                 print("Using remote only")
+
+            # Ok, a bit of unwieldy code here:
+            # So if USE_LOCAL and USE_REMOTE are both true, we do magic:
+            # We iterate through both arrays simulanousley
+            # If both are true, we set that to be rainbow
+            # Else we darken it
+            # To incorporate possibly white leds for visible presence without overlay, we should do an OR check before first
+            if self.USE_LOCAL == True and self.USE_REMOTE == True:
+                for idx, (ldi, rdi) in zip(self.local_difference_image, self.remote_difference_image):
+                    if ldi == "1" and rdi == "1":
+                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+                    else:
+                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
 
             self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
-    def display_difference_image(self, difference_bool_array: str):
-        for idx, x in enumerate(difference_bool_array):
-            if x == "1":
-                self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
-            else:
-                self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+    def display_difference_image(self, difference_bool_array: str, mode = 0):
+        if mode == 0:
+            for idx, x in enumerate(difference_bool_array):
+                if x == "1":
+                    self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 255, 255, 255)
+                else:
+                    self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+        
+        if mode == 1:
+            for idx, x in enumerate(difference_bool_array):
+                if x == "1":
+                    self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+                else:
+                    self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
     
     def bytes_to_boolean_array(self, data_bytes: bytes):
         return str(data_bytes, 'UTF-8')
