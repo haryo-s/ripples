@@ -24,14 +24,17 @@ class RipplesDisplay(SampleBase):
         self.local_difference_image = ""
         self.remote_difference_image = ""
         
+        print("USE_LOCAL: " + str(self.USE_LOCAL))
+        print("USE_REMOTE: " + str(self.USE_REMOTE))
+
         while True:
             if self.USE_LOCAL:
                 self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
-                print("Getting local image")
+                # print("Getting local image")
                 if len(self.local_difference_image) != self.PANEL_LENGTH:
                     break
             if self.USE_REMOTE:
-                print("Getting remote image")
+                # print("Getting remote image")
                 self.remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
                 if len(self.remote_difference_image) != self.PANEL_LENGTH:
                     break
@@ -52,11 +55,21 @@ class RipplesDisplay(SampleBase):
             # Else we darken it
             # To incorporate possibly white leds for visible presence without overlay, we should do an OR check before first
             if self.USE_LOCAL == True and self.USE_REMOTE == True:
-                for idx, (ldi, rdi) in zip(self.local_difference_image, self.remote_difference_image):
-                    if ldi == "1" and rdi == "1":
-                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
-                    else:
+                for idx, (ldi, rdi) in enumerate(zip(self.local_difference_image, self.remote_difference_image)):
+                    light_led = self.nand_boolean_array(ldi, rdi)
+                    if ldi == "0" and rdi == "0": # Doing a check here already if both are 0
                         self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+                    elif light_led == True:
+                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 127, 127, 127)
+                    elif light_led == False:
+                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+
+                    # if ldi == "1" or rdi == "1":
+                    #     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 255, 255, 255)
+                    # if ldi == "1" and rdi == "1":
+                    #     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+                    # else:
+                    #     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
 
             self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
@@ -75,6 +88,12 @@ class RipplesDisplay(SampleBase):
                 else:
                     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
     
+    def nand_boolean_array(self, a, b):
+        if a == "1" and b == "1":
+            return False
+        else:
+            return True
+
     def bytes_to_boolean_array(self, data_bytes: bytes):
         return str(data_bytes, 'UTF-8')
 
