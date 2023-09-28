@@ -37,6 +37,7 @@ class RipplesDisplay(SampleBase):
         print("USE_REMOTE: " + str(self.USE_REMOTE))
 
         while True:
+            time.sleep(1)
             if self.USE_LOCAL:
                 self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
                 # print("Getting local image")
