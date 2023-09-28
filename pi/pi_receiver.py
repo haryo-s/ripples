@@ -8,11 +8,20 @@ import time
 class RipplesDisplay(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RipplesDisplay, self).__init__(*args, **kwargs)
+
+        self.parser.add_argument("--display-mode", action="store", help="Set display mode. Currently not implemented", default="rainbow", type=str)
+        self.parser.add_argument("--sources", action="store", help="Set image sources. Uses a string. 'l' for local, 'r' for remote, 'lr' for both", default="lr", type=str)
+        self.parser.add_argument("--remote-url", action="store", help="Set image sources. Uses a string. 'l' for local, 'r' for remote, 'lr' for both", default="http://192.168.178.22:5000", type=str)
+
+        self.args = self.parser.parse_args()
+
         self.PANEL_WIDTH  = 64
         self.PANEL_HEIGHT = 32
         self.PANEL_LENGTH = self.PANEL_WIDTH * self.PANEL_HEIGHT
         self.URL_LOCAL    = 'http://127.0.0.1:5000'
-        self.URL_REMOTE   = 'http://192.168.178.22:5000'
+        self.URL_REMOTE   = self.args.remote_url
+        # self.URL_REMOTE   = 'http://192.168.178.22:5000'
+        
         self.USE_LOCAL    = True
         self.USE_REMOTE   = True
 
