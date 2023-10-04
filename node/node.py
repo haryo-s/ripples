@@ -2,15 +2,16 @@ import cv2
 import socket
 import numpy
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 61252
+# UDP_IP = "127.0.0.1"
+# UDP_PORT = 61252
 
-# UDP_IP = "192.168.178.21"
-# UDP_PORT = 8888
+UDP_IP = "192.168.178.21"
+UDP_PORT = 8888
 
 sock = socket.socket(socket.AF_INET,
                      socket.SOCK_DGRAM)
 
+cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
 if vc.isOpened(): # try to get the first frame
@@ -34,7 +35,9 @@ while rval:
     end_height = int(diff_image.shape[0] * scale_percent / 100)
     dimensions = (end_width, end_height)
 
-    diff_image_resized = cv2.resize(diff_image, (64, 64), interpolation = cv2.INTER_AREA)
+    diff_image_resized = cv2.resize(diff_image, (18, 7), interpolation = cv2.INTER_AREA)
+
+    cv2.imshow("preview", diff_image)
 
     sendbuffer = ""
 
@@ -45,13 +48,17 @@ while rval:
             else:
                 sendbuffer += str(0)
 
-
+    encode_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+    result, img_encoded = cv2.imencode(".jpg", diff_image_resized, encode_parameters)
+    # data: numpy.ndarray = numpy.array(img_encoded)
     data = "Hello from Python"
     data_string = bytes(sendbuffer, 'utf-8')
 
+    # sock.sendto(bytes(len(data_string)), (UDP_IP, UDP_PORT))
     sock.sendto(data_string, (UDP_IP, UDP_PORT))
 
-    # Clear the buffer
+    # sock.sendto(diff_image_resized, (UDP_IP, UDP_PORT))
+
     sendbuffer = ""
 
     key = cv2.waitKey(20)
@@ -59,3 +66,4 @@ while rval:
         break
 
 vc.release()
+cv2.destroyWindow("preview")
