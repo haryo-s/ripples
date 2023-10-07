@@ -6,6 +6,8 @@ app = Flask(__name__)
 LEDPANEL_DIMENSIONS = (64, 32)
 DIFF_THRESHOLD = 32
 
+send_buffer = ""
+
 camera = cv2.VideoCapture(0)  # use 0 for web camera
 #camera = cv2.VideoCapture(-1)
 #camera = cv2.VideoCapture('/dev/video0')
@@ -15,7 +17,7 @@ def get_diff_frame():
     return_val, frame1 = camera.read()
     frame2 = frame1
 
-    sendbuffer = ""
+    diff_frame = ""
     
     if return_val:
         return_val, frame1 = camera.read()
@@ -26,16 +28,23 @@ def get_diff_frame():
         for x in diff_image_resized:
             for y in x:
                 if y > DIFF_THRESHOLD:
-                    sendbuffer += str(1)
+                    diff_frame += str(1)
                 else:
-                    sendbuffer += str(0)
-    print(len(sendbuffer))
-    return sendbuffer
+                    diff_frame += str(0)
+    return diff_frame
 
 @app.route('/')
 def index():
-    sendbuffer = get_diff_frame()
-    return Response(sendbuffer, mimetype='text/plain')
+    return Response("Hello!", mimetype='text/plain')
+
+@app.route('/updatebuffer')
+def update_buffer():
+    send_buffer = get_diff_frame()
+    return Response(send_buffer, mimetype='text/plain')
+
+@app.route('/sendbuffer')
+def send_buffer():
+    return Response(send_buffer, mimetype='text/plain')
 
 @app.route('/test')
 def test():

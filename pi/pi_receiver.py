@@ -37,11 +37,11 @@ class RipplesDisplay(SampleBase):
         print("USE_REMOTE: " + str(self.USE_REMOTE))
 
         while True:
-            time.sleep(1)
+            # time.sleep(1)
             # Getting image from local cam if USE_LOCAL is true
             if self.USE_LOCAL:
                 try:
-                    self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
+                    self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL + "/updatebuffer")
                 except:
                     print("Failed to receive local image")
                     pass # On failure pass and don't replace image
@@ -51,7 +51,7 @@ class RipplesDisplay(SampleBase):
             # Getting image from remote cam if USE_REMOTE is true
             if self.USE_REMOTE:
                 try:
-                    self.remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
+                    self.remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE+ "/sendbuffer")
                 except:
                     print("Failed to receive remote image")
                     pass # On failure pass and don't replace image
