@@ -38,16 +38,24 @@ class RipplesDisplay(SampleBase):
 
         while True:
             time.sleep(1)
+            # Getting image from local cam if USE_LOCAL is true
             if self.USE_LOCAL:
-                self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
-                # print("Getting local image")
-                if len(self.local_difference_image) != self.PANEL_LENGTH:
-                    break
+                try:
+                    self.local_difference_image = self.get_camera_difference_image(self.URL_LOCAL)
+                except:
+                    break # On failure break and don't replace image
+                else:
+                    if len(self.local_difference_image) != self.PANEL_LENGTH:
+                        break # If length is incorrect don't replace image
+            # Getting image from remote cam if USE_REMOTE is true
             if self.USE_REMOTE:
-                # print("Getting remote image")
-                self.remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
-                if len(self.remote_difference_image) != self.PANEL_LENGTH:
-                    break
+                try:
+                    self.remote_difference_image = self.get_camera_difference_image(self.URL_REMOTE)
+                except:
+                    break # On failure break and don't replace image
+                else:
+                    if len(self.remote_difference_image) != self.PANEL_LENGTH:
+                        break # If length is incorrect don't replace image
 
             # Only use local and display its difference image
             if self.USE_LOCAL == True and self.USE_REMOTE == False:
