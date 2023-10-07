@@ -6,7 +6,7 @@ app = Flask(__name__)
 LEDPANEL_DIMENSIONS = (64, 32)
 DIFF_THRESHOLD = 32
 
-send_buffer = ""
+# global send_buffer: str
 
 camera = cv2.VideoCapture(0)  # use 0 for web camera
 #camera = cv2.VideoCapture(-1)
@@ -39,6 +39,7 @@ def index():
 
 @app.route('/updatebuffer')
 def update_buffer():
+    global send_buffer
     send_buffer = get_diff_frame()
     return Response(send_buffer, mimetype='text/plain')
 
