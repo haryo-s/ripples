@@ -10,6 +10,7 @@ class RipplesDisplay(SampleBase):
         super(RipplesDisplay, self).__init__(*args, **kwargs)
 
         self.parser.add_argument("--display-mode", action="store", help="Set display mode. Currently not implemented", default="rainbow", type=str)
+        self.parser.add_argument("--debug", action="store", help="enable debug mode, use 'true' or 'false'", default="false", type=str)
         self.parser.add_argument("--sources", action="store", help="Set image sources. Uses a string. 'l' for local, 'r' for remote, 'lr' for both", default="lr", type=str)
         self.parser.add_argument("--remote-url", action="store", help="Set image sources. Uses a string. 'l' for local, 'r' for remote, 'lr' for both", default="http://192.168.178.22:5000", type=str)
 
@@ -20,6 +21,7 @@ class RipplesDisplay(SampleBase):
         self.PANEL_LENGTH = self.PANEL_WIDTH * self.PANEL_HEIGHT
         self.URL_LOCAL    = 'http://127.0.0.1:5000'
         self.URL_REMOTE   = self.args.remote_url
+        self.DEBUG        = self.args.debug
         # self.URL_REMOTE   = 'http://192.168.178.22:5000'
         
         self.USE_LOCAL    = True
@@ -68,28 +70,33 @@ class RipplesDisplay(SampleBase):
                 self.display_difference_image(self.remote_difference_image)
                 print("Using remote only")
 
-            # Ok, a bit of unwieldy code here:
-            # So if USE_LOCAL and USE_REMOTE are both true, we do magic:
-            # We iterate through both arrays simulanousley
-            # If both are true, we set that to be rainbow
-            # Else we darken it
-            # To incorporate possibly white leds for visible presence without overlay, we should do an OR check before first
             if self.USE_LOCAL == True and self.USE_REMOTE == True:
-                for idx, (ldi, rdi) in enumerate(zip(self.local_difference_image, self.remote_difference_image)):
-                    light_led = self.nand_boolean_array(ldi, rdi)
-                    if ldi == "0" and rdi == "0": # Doing a check here already if both are 0
-                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
-                    elif light_led == True:
-                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 127, 127, 127)
-                    elif light_led == False:
-                        self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+                if self.DEBUG == "false":
+                    for idx, (ldi, rdi) in enumerate(zip(self.local_difference_image, self.remote_difference_image)):
+                        # We get an nand array here where if movement is in both, it returns false
+                        light_led = self.nand_boolean_array(ldi, rdi) 
+                        # Doing a check here already if both are 0
+                        if ldi == "0" and rdi == "0": 
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+                        # If one of the difference images pixel was lit, we light it white
+                        elif light_led == True: 
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 127, 127, 127)
+                        # If both pixels were true, than light_led will false. As we already skipped non-lit pixels, the only ones left are overlaps
+                        elif light_led == False: 
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
 
-                    # if ldi == "1" or rdi == "1":
-                    #     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 255, 255, 255)
-                    # if ldi == "1" and rdi == "1":
-                    #     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
-                    # else:
-                    #     self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+                # If debug is true, we show red for local, green for remote and blue for overlap
+                else:
+                    for idx, (ldi, rdi) in enumerate(zip(self.local_difference_image, self.remote_difference_image)):
+                        light_led = self.nand_boolean_array(ldi, rdi)
+                        if ldi == "0" and rdi == "0": # Doing a check here already if both are 0
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 0)
+                        elif ldi == True:
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 127, 0, 0) #Red for local difference image
+                        elif rdi == True:
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 127, 0) #Green for remote difference image
+                        elif light_led == False:
+                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 127) #Blue for overlap
 
             self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
