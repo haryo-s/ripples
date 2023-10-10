@@ -85,7 +85,7 @@ class RipplesDisplay(SampleBase):
                             self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 127, 127, 127)
                         # If both pixels were true, than light_led will false. As we already skipped non-lit pixels, the only ones left are overlaps
                         elif light_led == False: 
-                            seset_ledpanel_rgb_extreme()
+                            self.set_ledpanel_rgb_extreme()
                             # self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
 
                 # If debug is true, we show red for local, green for remote and blue for overlap
