@@ -27,13 +27,15 @@ class RipplesDisplay(SampleBase):
         self.USE_LOCAL    = True
         self.USE_REMOTE   = True
 
+        self.local_difference_image = ""
+        self.remote_difference_image = ""
+
     def run(self):
         self.offscreen_canvas = self.matrix.CreateFrameCanvas()
         self.width = self.offscreen_canvas.width
         self.height = self.offscreen_canvas.height
 
-        self.local_difference_image = ""
-        self.remote_difference_image = ""
+
         
         print("USE_LOCAL: " + str(self.USE_LOCAL))
         print("USE_REMOTE: " + str(self.USE_REMOTE))
@@ -83,7 +85,8 @@ class RipplesDisplay(SampleBase):
                             self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 127, 127, 127)
                         # If both pixels were true, than light_led will false. As we already skipped non-lit pixels, the only ones left are overlaps
                         elif light_led == False: 
-                            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
+                            seset_ledpanel_rgb_extreme()
+                            # self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, randrange(255), randrange(255), randrange(255))
 
                 # If debug is true, we show red for local, green for remote and blue for overlap
                 else:
@@ -127,6 +130,16 @@ class RipplesDisplay(SampleBase):
     def get_camera_difference_image(self, url: str):
         with urllib.request.urlopen(url) as response:
             return self.bytes_to_boolean_array(response.read())
+
+    def set_ledpanel_rgb_extreme(self):
+        led_case = randrange(2)
+
+        if led_case == 0:
+            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 255, 0, 0)
+        if led_case == 1:
+            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 255, 0)
+        if led_case == 2:
+            self.offscreen_canvas.SetPixel(idx % self.width, idx / self.width, 0, 0, 255)
 
 if __name__ == "__main__":
     ripples_display = RipplesDisplay()
